@@ -7,8 +7,7 @@ type binop = Plus | Minus | Times | Div
 type stm =
     | CompundStm of stm * stm
     | AssignStm of idf * expr
-    | OpExp of expr * binop * expr
-    | EseqExp of stm * expr
+    | PrintStm of expr list
 and expr =
     | IdExp of idf
     | NumExp of int
