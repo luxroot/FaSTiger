@@ -5,7 +5,8 @@ module Semantics =
 
     let rec apply_env env idf =
         match env with
-        | (x, v) :: tl -> if x = idf then v else apply_env tl idf
+        | (x, v) :: tl ->
+            if x = idf then v else apply_env tl idf
         | _ -> failwith ("Undefined idf of " + idf)
 
     let rec run_statement env stm =

@@ -5,8 +5,11 @@ open Xunit
 
 open Interpreter
 
+
 [<Fact>]
-let ``My test`` () =
-    let expected = "Hello abc"
-    let actual = Say.hello "abcd"
-    Assert.Equal(expected, actual)
+let AddTest () =
+    let five = Interpreter.NumExp 5
+    let seven = Interpreter.NumExp 7
+    let expected = 12
+    let actual = Interpreter.Semantics.eval [] (Interpreter.OpExp (five, Interpreter.Plus, seven))
+    Assert.Equal(actual, expected)
