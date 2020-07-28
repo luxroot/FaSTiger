@@ -2,11 +2,11 @@
 Tiger Language compiler implemented in F#(Fsharp)
 
 ## Tiger Language specfications
-[Reference Manual]: http://www.cs.columbia.edu/~sedwards/classes/2002/w4115/tiger.pdf
-[Specification]: https://cs.nyu.edu/courses/fall13/CSCI-GA.2130-001/tiger-spec.pdf
+[Reference Manual](http://www.cs.columbia.edu/~sedwards/classes/2002/w4115/tiger.pdf)
+[Specification](https://cs.nyu.edu/courses/fall13/CSCI-GA.2130-001/tiger-spec.pdf)
 
 ## References
-[Modern compiler Implementation in ML]: https://www.cs.princeton.edu/~appel/modern/ml/
-[Course materials from Prof. Hakjoo Oh's class]: http://prl.korea.ac.kr/~pronto/home/courses/cose312/2017/
+[Modern Compiler Implementation in ML](https://www.cs.princeton.edu/~appel/modern/ml/)
+[Course materials from Prof. Hakjoo Oh's class](http://prl.korea.ac.kr/~pronto/home/courses/cose312/2017/)
 
 
