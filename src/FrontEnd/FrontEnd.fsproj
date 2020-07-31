@@ -5,11 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FsLexYacc" Version="10.0.0" />
-  </ItemGroup>
 
+    <Compile Include="Token.fs" />
+    <FsLex Include="..\FrontEnd\Lexer.fsl">
+      <OtherFlags>--module Lexer --unicode</OtherFlags>
+    </FsLex>
+    <Compile Include="Lexer.fs" />
+  </ItemGroup>
 </Project>

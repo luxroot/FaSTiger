@@ -1,0 +1,66 @@
+{
+open FSharp.Text.Lexing
+open Token
+open System
+open System.Text
+
+let newline (lexbuf: LexBuffer<_>) =
+    lexbuf.StartPos <- lexbuf.StartPos.NextLine
+
+let lexeme = LexBuffer<_>.LexemeString
+
+}
+
+let digit = ['0'-'9']
+let alpha = ['a'-'z' 'A'-'Z']
+let whitespace = [' ' '\t']
+let newline = ('\n'|'\r' '\n')
+let ident = alpha(alpha|'_'|digit)*
+let ignored = '\\' [' ' '\t' '\r' '\n']+ '\\'
+let ascii = '\\'(digit)(digit)(digit)
+
+rule tokenize = parse
+| eof           { EOF }
+| whitespace    { tokenize lexbuf }
+| newline       { newline lexbuf; tokenize lexbuf }
+| "array"       { ARRAY }
+| "break"       { BREAK }
+| "do"          { DO }
+| "else"        { ELSE }
+| "end"         { END }
+| "for"         { FOR }
+| "function"    { FUNCTION }
+| "if"          { IF }
+| "in"          { IN }
+| "let"         { LET }
+| "nil"         { NIL }
+| "of"          { OF }
+| "then"        { THEN }
+| "to"          { TO }
+| "type"        { TYPE }
+| "var"         { VAR }
+| "while"       { WHILE }
+| "int"         { INT }
+| "string"      { STRING }
+| ","           { COMMA }
+| ":"           { COLON }
+| ";"           { SEMICOLON }
+| "("           { LPAREN }
+| ")"           { RPAREN }
+| "["           { LBRACKET }
+| "]"           { RBRACKET }
+| "{"           { LBRACE }
+| "}"           { RBRACE }
+| "."           { DOT }
+| "+"           { PLUS }
+| "-"           { MINUS }
+| "*"           { ASTERISK }
+| "/"           { DIV }
+| "="           { EQ }
+| "<>"          { NE }
+| "<"           { LT }
+| "<="          { LE }
+| ">"           { GT }
+| ">="          { GE }
+| "&"           { AND }
+| "|"           { OR }
