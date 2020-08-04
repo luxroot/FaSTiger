@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="FsLexYacc" Version="10.0.0" />
-
+    <Compile Include="Ast.fs" />
     <Compile Include="Token.fs" />
     <FsLex Include="..\FrontEnd\Lexer.fsl">
       <OtherFlags>--module Lexer --unicode</OtherFlags>
