@@ -1,0 +1,65 @@
+{%
+    open Ast
+%}
+
+
+// Token definitions
+%start start
+%token EOF ARRAY BREAK DO ELSE END FOR FUNCTION IF IN LET NIL OF THEN INT STRING
+%token TO TYPE VAR WHILE COMMA COLON SEMICOLON LPAREN RPAREN LBRACKET RBRACKET
+%token LBRACE RBRACE DOT PLUS MINUS TIMES DIV EQ NE LT LE GT GE AND OR ASSIGN
+
+// Tokens associated with types
+%token <string> ID
+%token <string> STRING_LIT
+%token <System.Int32> INT_LIT
+
+// Means whole program is just an expression
+%type < Ast.Expr > start
+
+// Operator priority
+%nonassoc ASSIGN
+%left AND OR
+%nonassoc EQ NE LT LE GT GE
+%left PLUS MINUS
+%left TIMES DIV
+%nonaoosc LPAREN RPAREN
+
+%%
+
+// Grammer rules
+
+start: Expr EOF { %1 }
+
+BinOp: PLUS { Plus }
+     | MINUS { Minus }
+     | TIMES { Times }
+     | DIVIDE { Divied }
+     | EQ { Eq }
+     | NE { Ne }
+     | GT { Gt }
+     | GE { Ge }
+     | LT { Lt }
+     | LE { Le }
+     | AND { And }
+     | OR { Or }
+
+LValue: ID { LIdent($1) }
+      | LValue DOT ID { LRecField($1, $3) }
+      | LValue LBRACKET Expr RBRACKET { LArrSubscript($1, $3) }
+
+TypeId: ID { $1 }
+      | INT { "int" }
+      | STRING { "string" }
+
+Expr: STRING_LIT { StrLitExpr($1) }
+    | INT_LIT { IntLitExpr($1) }
+    | NIL { NilExpr }
+    | LPAREN RPAREN { UnitExpr }
+    | LValue { LValueExpr($1) }
+    | MINUS Expr %prec TIMES { NegExpr }
+    | Expr BinOp Expr { BinExpr($1, $2, $3) }
+    | LValue ASSIGN Expr { AssignExpr($1, $3) }
+    | ID LPAREN ExprList RPAREN { CallExpr(%1, %3) }
+    | LPAREN ExprSeq RPAREN { SeqExpr($2) }
+    |
