@@ -23,6 +23,7 @@
 %nonassoc EQ NE LT LE GT GE
 %left PLUS MINUS
 %left TIMES DIV
+$nonassoc THEN ELSE DO
 %nonaoosc LPAREN RPAREN
 
 %%
@@ -56,10 +57,50 @@ Expr: STRING_LIT { StrLitExpr($1) }
     | INT_LIT { IntLitExpr($1) }
     | NIL { NilExpr }
     | LPAREN RPAREN { UnitExpr }
+    | LPAREN Expr RPAREN { $2 }
     | LValue { LValueExpr($1) }
     | MINUS Expr %prec TIMES { NegExpr }
     | Expr BinOp Expr { BinExpr($1, $2, $3) }
     | LValue ASSIGN Expr { AssignExpr($1, $3) }
-    | ID LPAREN ExprList RPAREN { CallExpr(%1, %3) }
+    | ID LPAREN ExprList RPAREN { CallExpr($1, List.rev($3)) }
     | LPAREN ExprSeq RPAREN { SeqExpr($2) }
-    |
+    | ID LBRACE FieldList RBRACE { RecExpr($1, List.rev($3)) }
+    | ID LBRACKET Expr RBRACKET OF Expr { ArrExpr($1, $3, $6) }
+    | IF Expr THEN Expr ELSE Expr { CondExpr($2, $4, Some $6) }
+    | IF Expr THEN Expr { CondExpr($2, $4, None) }
+    | WHILE Expr DO Expr { WhileExpr($2, $4) }
+    | FOR ID ASSIGN Expr TO Expr DO Expr { ForExpr( $2, $4, $6, $8 ) }
+    | BREAK { BreakExpr }
+    | LET DecList IN Expr { LetExpr( $2, $4 ) }
+
+ExprList: { [] }
+        | Expr { [ $1 ] }
+        | ExprList COMMA Expr { $3 :: $1 }
+
+ExprSeq: Expr SEMICOLON Expr { [ $3; $1 ] }
+       | ExprSeq SEMICOLON Expr { $3 :: $1 }
+
+FieldList: { [] }
+         | ID EQ Expr { [($1, $3)] }
+         | FieldList COMMA ID EQ Expr { ($3, $5) :: $1 }
+
+DecList: Dec { [$1] }
+       | DecList Dec { $2 :: $1 }
+
+Dec: TypeDec { TDec($1) }
+   | VarDec { VDec($1) }
+   | FuncDec { FDec($1) }
+
+TypeDec: TypeId { TypeAliasDec($1) }
+       | LBRACE TypeFieldList RBRACE { RecordDec(List.rev($2)) }
+       | ARRAY OF TypeId { ArrayDec($3) }
+
+TypeFieldList: { [] }
+             | ID COLON TypeId { [($1, $3)] }
+             | TypeFieldList ID COLON TypeId { ($2, $4) :: $1 }
+
+VarDec: VAR ID ASSIGN Expr { VariableDec($2, $4) }
+      | VAR ID COLON TypeId ASSIGN Expr { VarWithTypeDec($2, $4, $6) }
+
+FuncDec: FUNCTION ID LBRACE FieldList RBRACE EQ Expr { FunctionDec($2, List.rev($4)) }
+       | FUNCTION ID LBRACE FieldList RBRACE COLON TypeId EQ Expr { FuncWithTypeDec($2, List.rev($4), $7, $9) }
