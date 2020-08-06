@@ -19,7 +19,7 @@ let newline = ('\n'|'\r' '\n')
 let ident = alpha(alpha|'_'|digit)*
 let ignored = '\\' [' ' '\t' '\r' '\n']+ '\\'
 let ascii = '\\'(digit)(digit)(digit)
-let nonEscape = [ ^ '\n' '\t' '\r' '\"' ]
+let nonEscape = [ ^ '\n' '\t' '\r' '\"' '\\' ]
 
 rule token = parse
 | eof           { EOF }
@@ -73,13 +73,14 @@ rule token = parse
 | "/*"          { comment 0 lexbuf }
 and stringLit sb = parse
 | ignored       { stringLit sb lexbuf }
-| ascii         { stringLit ((lexeme lexbuf).[1..] |> int |> char |> sb.Append) lexbuf }
-| "\\n"         { stringLit (sb.Append("\n")) lexbuf }
-| "\\t"         { stringLit (sb.Append("\t")) lexbuf }
-| "\\\""        { stringLit (sb.Append("\"")) lexbuf }
-| "\\\\"        { stringLit (sb.Append("\\")) lexbuf }
+| "\\n"         { stringLit (sb.Append('\n')) lexbuf }
+| "\\t"         { stringLit (sb.Append('\t')) lexbuf }
+| ascii         { stringLit (sb.Append((lexeme lexbuf).[1..] |> int |> char)) lexbuf }
+| '\\'          { failwith "Unexpected \\" }
+| "\\\""        { stringLit (sb.Append('\"')) lexbuf }
+| "\\\\"        { stringLit (sb.Append('\\')) lexbuf }
 | nonEscape+    { stringLit (sb.Append(lexeme lexbuf)) lexbuf }
-| "\""          { STRING_LIT (sb.ToString()) }
+| '\"'          { STRING_LIT (sb.ToString()) }
 and comment depth = parse
 | "/*"          { comment (depth + 1) lexbuf }
 | "*/"          { if depth = 0 then token lexbuf else comment (depth - 1) lexbuf }

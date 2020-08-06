@@ -39,10 +39,10 @@ open Ast
 
 start: Expr EOF { $1 }
 
-BinOp: PLUS %prec PLUS { Plus }
-     | MINUS %prec MINUS { Minus }
-     | TIMES %prec TIMES { Times }
-     | DIV %prec DIV { Divide }
+BinOp: PLUS { Plus }
+     | MINUS { Minus }
+     | TIMES { Times }
+     | DIV { Divide }
      | EQ { Eq }
      | NE { Ne }
      | GT { Gt }
@@ -54,7 +54,7 @@ BinOp: PLUS %prec PLUS { Plus }
 
 LValue: ID { LIdent($1) }
       | LValue DOT ID { LRecField($1, $3) }
-      | LValue LBRACKET Expr RBRACKET { LArrSubscript($1, $3) }
+      | ID LBRACKET Expr RBRACKET { LArrSubscript($1, $3) }
 
 TypeId: ID { $1 }
       | INT { "int" }
@@ -67,12 +67,12 @@ Expr: STRING_LIT { StrLitExpr($1) }
     | LPAREN Expr RPAREN { $2 }
     | LValue { LValueExpr($1) }
     | MINUS Expr %prec TIMES { NegExpr($2) }
-    | Expr BinOp Expr { BinExpr($1, $2, $3) }
+    | Expr BinOp Expr %prec PLUS { BinExpr($1, $2, $3) }
     | LValue ASSIGN Expr { AssignExpr($1, $3) }
     | ID LPAREN ExprList RPAREN { CallExpr($1, List.rev($3)) }
     | LPAREN ExprSeq RPAREN { SeqExpr($2) }
     | ID LBRACE FieldList RBRACE { RecExpr($1, List.rev($3)) }
-    | ID LBRACKET Expr RBRACKET OF Expr { ArrExpr($1, $3, $6) }
+    | ID LBRACKET Expr RBRACKET OF Expr %prec ASSIGN { ArrExpr($1, $3, $6) }
     | IF Expr THEN Expr ELSE Expr { CondExpr($2, $4, Some $6) }
     | IF Expr THEN Expr { CondExpr($2, $4, None) }
     | WHILE Expr DO Expr { WhileExpr($2, $4) }

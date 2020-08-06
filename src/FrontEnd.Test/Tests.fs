@@ -6,7 +6,9 @@ open FSharp.Text.Lexing
 
 [<Fact>]
 let ``My test`` () =
-    let txt = "1 * 3 + 2"
+    let txt = """
+    "\065BC\068\naB\"\""
+    """
     let buf = LexBuffer<char>.FromString txt
     let ast = Parser.start Lexer.token buf
     printfn "%A" ast

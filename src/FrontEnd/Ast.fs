@@ -24,7 +24,7 @@ type BinOp =
 type LValue =
     | LIdent of Id
     | LRecField of LValue * Id
-    | LArrSubscript of LValue * Expr
+    | LArrSubscript of Id * Expr
 
 and Expr =
     | StrLitExpr of string
