@@ -49,10 +49,12 @@ and VarDec =
     | VariableDec of Id * Expr
     | VarWithTypeDec of Id * TypeId * Expr
 
-and TypeDec =
+and TypeDef =
     | TypeAliasDec of TypeId
     | RecordDec of (Id * TypeId) list
     | ArrayDec of TypeId
+
+and TypeDec = TypeDec of TypeId * TypeDef
 
 and FuncDec =
     | FunctionDec of Id * (Id * TypeId) list * Expr

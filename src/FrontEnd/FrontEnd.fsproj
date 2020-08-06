@@ -7,9 +7,13 @@
   <ItemGroup>
     <PackageReference Include="FsLexYacc" Version="10.0.0" />
     <Compile Include="Ast.fs" />
-    <Compile Include="Token.fs" />
-    <FsLex Include="..\FrontEnd\Lexer.fsl">
-      <OtherFlags>--module Lexer --unicode</OtherFlags>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="Parser.fsi" />
+    <Compile Include="Parser.fs" />
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
     </FsLex>
     <Compile Include="Lexer.fs" />
   </ItemGroup>
