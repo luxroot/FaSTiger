@@ -1,4 +1,5 @@
 %{
+open FSharp.Text.Parsing
 open Ast
 open Symbol
 
@@ -62,7 +63,7 @@ Variable: ID { SimpleVar (symbol $1, (getPos parseState 1)) }
 VariableCont:
             | ID DOT ID { FieldVar (SimpleVar (symbol $1, getPos parseState 1), symbol $3, getPos parseState 3) }
             | VariableCont DOT ID { FieldVar ($1, symbol $3, getPos parseState 3) }
-            | ID LBRACKET Expr RBRACKET { SubscriptVar (SimpleVar (symbol $1, getPos parseState 1), $3, getPos parsestate 3) }
+            | ID LBRACKET Expr RBRACKET { SubscriptVar (SimpleVar (symbol $1, getPos parseState 1), $3, getPos parseState 3) }
             | VariableCont LBRACKET Expr RBRACKET { SubscriptVar ($1, $3, getPos parseState 3) }
 
 
@@ -70,36 +71,39 @@ TypeId: ID { $1 }
       | INT { "int" }
       | STRING { "string" }
 
-Expr: STRING_LIT { StringExpr($1) }
+Expr: STRING_LIT { StringExpr($1, getPos parseState 1) }
     | INT_LIT { IntExpr($1) }
     | NIL { NilExpr }
     | LPAREN RPAREN { UnitExpr }
     | LPAREN Expr RPAREN { $2 }
     | Variable { VarExpr($1) }
-    | MINUS Expr %prec TIMES { OpExpr {left=(IntExpr 0), oper=MinusOp, right=$2, pos=(getPos parseState 1)} }
-    | Expr BinOp Expr %prec PLUS { OpExpr {left=$1, oper=$2, right=$3, pos=(getPos parseState 1)} }
-    | Variable ASSIGN Expr { AssignExpr {} }
-    | ID LPAREN ExprList RPAREN { CallExpr($1, List.rev($3)) }
+    | MINUS Expr %prec TIMES { OpExpr {left=(IntExpr 0); oper=MinusOp; right=$2; pos=(getPos parseState 1)} }
+    | Expr BinOp Expr %prec PLUS { OpExpr {left=$1; oper=$2; right=$3; pos=(getPos parseState 1)} }
+    | Variable ASSIGN Expr { AssignExpr {var=$1; exp=$3; pos=(getPos parseState 1)} }
+    | ID LPAREN ExprList RPAREN { CallExpr {func=symbol $1; args=List.rev($3); pos=(getPos parseState 1)} }
     | LPAREN ExprSeq RPAREN { SeqExpr($2) }
-    | ID LBRACE FieldList RBRACE { RecExpr($1, List.rev($3)) }
-    | ID LBRACKET Expr RBRACKET OF Expr %prec ASSIGN { ArrExpr($1, $3, $6) }
-    | IF Expr THEN Expr ELSE Expr { CondExpr($2, $4, Some $6) }
-    | IF Expr THEN Expr { CondExpr($2, $4, None) }
-    | WHILE Expr DO Expr { WhileExpr($2, $4) }
-    | FOR ID ASSIGN Expr TO Expr DO Expr { ForExpr( $2, $4, $6, $8 ) }
-    | BREAK { BreakExpr }
+    | ID LBRACE FieldList RBRACE { RecordExpr {fields=$3; typ=symbol $1; pos=(getPos parseState 1)} }
+    | ID LBRACKET Expr RBRACKET OF Expr %prec ASSIGN { ArrayExpr {typ=symbol $1; size=$3; init=$6; pos=(getPos parseState 1)} }
+    | IF Expr THEN Expr ELSE Expr { IfExpr {test=$2; then'=$4; else'=Some $6; pos=(getPos parseState 1)} }
+    | IF Expr THEN Expr { IfExpr {test=$2; then'=$4; else'=None; pos=(getPos parseState 1)} }
+    | WHILE Expr DO Expr { WhileExpr {test=$2; body=$4; pos=(getPos parseState 1)} }
+    | FOR ID ASSIGN Expr TO Expr DO Expr { ForExpr {var=symbol $2; escape=ref true; lo=$4; hi=$6; body=$8; pos=(getPos parseState 1)} }
+    | BREAK { BreakExpr (getPos parseState 1) }
     | LET DecList IN Expr END { LetExpr( $2, $4 ) }
 
+// Function call argument list
 ExprList: { [] }
         | Expr { [ $1 ] }
         | ExprList COMMA Expr { $3 :: $1 }
 
-ExprSeq: Expr SEMICOLON Expr { [ $3; $1 ] }
-       | ExprSeq SEMICOLON Expr { $3 :: $1 }
+// Sequence of expressions
+ExprSeq: Expr SEMICOLON Expr { [ $3; ($1, getPos parseState 1) ] }
+       | ExprSeq SEMICOLON Expr { ($3, getPos parseState 3) :: $1 }
 
+// Record creation
 FieldList: { [] }
-         | ID EQ Expr { [($1, $3)] }
-         | FieldList COMMA ID EQ Expr { ($3, $5) :: $1 }
+         | ID EQ Expr { [(symbol $1, $3, getPos parseState 1)] }
+         | FieldList COMMA ID EQ Expr { (symbol $3, $5, getPos parseState 3) :: $1 }
 
 DecList: Dec { [$1] }
        | DecList Dec { $2 :: $1 }

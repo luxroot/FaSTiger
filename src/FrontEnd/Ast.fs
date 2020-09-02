@@ -42,7 +42,7 @@ and Expr =
     | ArrayExpr of ArrayRec
 
 and Dec =
-    | FunctionDec of FuncDecRec list
+    | FunctionDec of FunDecRec list
     | VarDec of VarDecRec
     | TypeDec of TypeDecRec
 
