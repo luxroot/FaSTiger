@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="FsLexYacc" Version="10.0.0" />
+    <Compile Include="Symbol.fs" />
     <Compile Include="Ast.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module Parser</OtherFlags>

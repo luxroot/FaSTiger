@@ -1,5 +1,11 @@
 %{
 open Ast
+open Symbol
+
+let getPos (parseState: IParseState) lexIdx =
+    let pos = parseState.InputStartPosition lexIdx
+    (pos.Line + 1, pos.Column)
+
 %}
 
 // Token definitions
@@ -39,36 +45,40 @@ open Ast
 
 start: Expr EOF { $1 }
 
-BinOp: PLUS { Plus }
-     | MINUS { Minus }
-     | TIMES { Times }
-     | DIV { Divide }
-     | EQ { Eq }
-     | NE { Ne }
-     | GT { Gt }
-     | GE { Ge }
-     | LT { Lt }
-     | LE { Le }
-     | AND { And }
-     | OR { Or }
+BinOp: PLUS { PlusOp }
+     | MINUS { MinusOp }
+     | TIMES { TimesOp }
+     | DIV { DivideOp }
+     | EQ { EqOp }
+     | NE { NeOp }
+     | GT { GtOp }
+     | GE { GeOp }
+     | LT { LtOp }
+     | LE { LeOp }
 
-LValue: ID { LIdent($1) }
-      | LValue DOT ID { LRecField($1, $3) }
-      | ID LBRACKET Expr RBRACKET { LArrSubscript($1, $3) }
+Variable: ID { SimpleVar (symbol $1, (getPos parseState 1)) }
+        | VariableCont { $1 }
+
+VariableCont:
+            | ID DOT ID { FieldVar (SimpleVar (symbol $1, getPos parseState 1), symbol $3, getPos parseState 3) }
+            | VariableCont DOT ID { FieldVar ($1, symbol $3, getPos parseState 3) }
+            | ID LBRACKET Expr RBRACKET { SubscriptVar (SimpleVar (symbol $1, getPos parseState 1), $3, getPos parsestate 3) }
+            | VariableCont LBRACKET Expr RBRACKET { SubscriptVar ($1, $3, getPos parseState 3) }
+
 
 TypeId: ID { $1 }
       | INT { "int" }
       | STRING { "string" }
 
-Expr: STRING_LIT { StrLitExpr($1) }
-    | INT_LIT { IntLitExpr($1) }
+Expr: STRING_LIT { StringExpr($1) }
+    | INT_LIT { IntExpr($1) }
     | NIL { NilExpr }
     | LPAREN RPAREN { UnitExpr }
     | LPAREN Expr RPAREN { $2 }
-    | LValue { LValueExpr($1) }
-    | MINUS Expr %prec TIMES { NegExpr($2) }
-    | Expr BinOp Expr %prec PLUS { BinExpr($1, $2, $3) }
-    | LValue ASSIGN Expr { AssignExpr($1, $3) }
+    | Variable { VarExpr($1) }
+    | MINUS Expr %prec TIMES { OpExpr {left=(IntExpr 0), oper=MinusOp, right=$2, pos=(getPos parseState 1)} }
+    | Expr BinOp Expr %prec PLUS { OpExpr {left=$1, oper=$2, right=$3, pos=(getPos parseState 1)} }
+    | Variable ASSIGN Expr { AssignExpr {} }
     | ID LPAREN ExprList RPAREN { CallExpr($1, List.rev($3)) }
     | LPAREN ExprSeq RPAREN { SeqExpr($2) }
     | ID LBRACE FieldList RBRACE { RecExpr($1, List.rev($3)) }
