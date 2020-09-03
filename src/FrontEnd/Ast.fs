@@ -44,7 +44,7 @@ and Expr =
 and Dec =
     | FunctionDec of FunDecRec list
     | VarDec of VarDecRec
-    | TypeDec of TypeDecRec
+    | TypeDec of TypeDecRec list
 
 and Type =
     | NameTy of Symbol * Pos
@@ -63,6 +63,6 @@ and LetRec = { decs: Dec list; body: Expr; pos: Pos }
 and ArrayRec = { typ: Symbol; size: Expr; init: Expr; pos: Pos }
 
 and FieldRec = { name: Symbol; escape: bool ref; typ: Symbol; pos: Pos }
-and FunDecRec = { name: Symbol; params: FieldRec list; result: (Symbol * Pos) option; body: Expr; pos: Pos }
+and FunDecRec = { name: Symbol; param: FieldRec list; result: (Symbol * Pos) option; body: Expr; pos: Pos }
 and VarDecRec = { name: Symbol; escape: bool ref; typ: (Symbol * Pos) option; init: Expr; pos: Pos }
 and TypeDecRec = { name: Symbol; ty: Type; pos: Pos }

@@ -89,7 +89,9 @@ Expr: STRING_LIT { StringExpr($1, getPos parseState 1) }
     | WHILE Expr DO Expr { WhileExpr {test=$2; body=$4; pos=(getPos parseState 1)} }
     | FOR ID ASSIGN Expr TO Expr DO Expr { ForExpr {var=symbol $2; escape=ref true; lo=$4; hi=$6; body=$8; pos=(getPos parseState 1)} }
     | BREAK { BreakExpr (getPos parseState 1) }
-    | LET DecList IN Expr END { LetExpr( $2, $4 ) }
+    | LET DecList IN Expr END { LetExpr {decs=$2; body= $4; pos=(getPos parseState 1)} }
+    | Expr AND Expr { IfExpr {test=$1; then'=$3; else'=Some (IntExpr 0); pos=(getPos parseState 2)} }
+    | Expr OR Expr { IfExpr {test=$1; then'=(IntExpr 1); else'=Some $3; pos=(getPos parseState 2)} }
 
 // Function call argument list
 ExprList: { [] }
@@ -97,7 +99,7 @@ ExprList: { [] }
         | ExprList COMMA Expr { $3 :: $1 }
 
 // Sequence of expressions
-ExprSeq: Expr SEMICOLON Expr { [ $3; ($1, getPos parseState 1) ] }
+ExprSeq: Expr SEMICOLON Expr { [ ($3, getPos parseState 3); ($1, getPos parseState 1) ] }
        | ExprSeq SEMICOLON Expr { ($3, getPos parseState 3) :: $1 }
 
 // Record creation
@@ -105,25 +107,35 @@ FieldList: { [] }
          | ID EQ Expr { [(symbol $1, $3, getPos parseState 1)] }
          | FieldList COMMA ID EQ Expr { (symbol $3, $5, getPos parseState 3) :: $1 }
 
-DecList: Dec { [$1] }
-       | DecList Dec { $2 :: $1 }
+DecList: { [] }
+       | VarDec DecList { $1 :: $2 }
+       | TypeDec DecList {
+           match $2 with
+           | [] -> (TypeDec [ $1 ]) :: $2
+           | h :: t -> match h with
+                       | TypeDec lst -> TypeDec ($1::lst) :: t
+                       | _ -> (TypeDec [$1]) :: $2
+       }
+       | FuncDec DecList {
+           match $2 with
+           | [] -> (FunctionDec [ $1 ]) :: $2
+           | h :: t -> match h with
+                       | FunctionDec lst -> FunctionDec ($1::lst) :: t
+                       | _ -> (FunctionDec [$1]) :: $2
+       }
 
-Dec: TypeDec { TDec($1) }
-   | VarDec { VDec($1) }
-   | FuncDec { FDec($1) }
+TypeDec: TYPE ID EQ TypeDefinition { {name=symbol $2; ty=$4; pos=(getPos parseState 1)} }
 
-TypeDec: TYPE TypeId EQ TypeDefinition { TypeDec($2, $4) }
-
-TypeDefinition: TypeId { TypeAliasDec($1) }
-              | LBRACE TypeFieldList RBRACE { RecordDec(List.rev($2)) }
-              | ARRAY OF TypeId { ArrayDec($3) }
+TypeDefinition: ID { NameTy (symbol $1, getPos parseState 1) }
+              | LBRACE TypeFieldList RBRACE { RecordTy($2) }
+              | ARRAY OF TypeId { ArrayTy(symbol $3, getPos parseState 3) }
 
 TypeFieldList: { [] }
-             | ID COLON TypeId { [($1, $3)] }
-             | TypeFieldList COMMA ID COLON TypeId { ($3, $5) :: $1 }
+             | ID COLON TypeId { [ {name=symbol $1; escape=ref true; typ=symbol $3; pos=(getPos parseState 1)} ] }
+             | TypeFieldList COMMA ID COLON TypeId { {name=symbol $3; escape=ref true; typ=symbol $5; pos=(getPos parseState 3)} :: $1 }
 
-VarDec: VAR ID ASSIGN Expr { VariableDec($2, $4) }
-      | VAR ID COLON TypeId ASSIGN Expr { VarWithTypeDec($2, $4, $6) }
+VarDec: VAR ID ASSIGN Expr { VarDec {name=symbol $2; escape=ref true; typ=None; init=$4; pos=(getPos parseState 2)} }
+      | VAR ID COLON ID ASSIGN Expr { VarDec {name=symbol $2; escape=ref true; typ=Some (symbol $4, getPos parseState 4); init=$6; pos=(getPos parseState 2)} }
 
-FuncDec: FUNCTION ID LPAREN TypeFieldList RPAREN EQ Expr { FunctionDec($2, List.rev($4), $7) }
-       | FUNCTION ID LPAREN TypeFieldList RPAREN COLON TypeId EQ Expr { FuncWithTypeDec($2, List.rev($4), $7, $9) }
+FuncDec: FUNCTION ID LPAREN TypeFieldList RPAREN EQ Expr { {name=symbol $2; param=$4; result=None; body=$7; pos=(getPos parseState 1)} }
+       | FUNCTION ID LPAREN TypeFieldList RPAREN COLON ID EQ Expr { {name=symbol $2; param=$4; result=Some (symbol $7, getPos parseState 7); body=$9; pos=(getPos parseState 1)} }
