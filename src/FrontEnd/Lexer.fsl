@@ -6,7 +6,7 @@ open System
 open System.Text
 
 let newline (lexbuf: LexBuffer<_>) =
-    lexbuf.StartPos <- lexbuf.StartPos.NextLine
+    lexbuf.EndPos <- lexbuf.EndPos.NextLine
 
 let lexeme = LexBuffer<_>.LexemeString
 
@@ -42,8 +42,6 @@ rule token = parse
 | "type"        { TYPE }
 | "var"         { VAR }
 | "while"       { WHILE }
-| "int"         { INT }
-| "string"      { STRING }
 | ","           { COMMA }
 | ":"           { COLON }
 | ";"           { SEMICOLON }
